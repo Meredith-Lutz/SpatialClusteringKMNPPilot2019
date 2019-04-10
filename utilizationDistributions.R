@@ -75,13 +75,13 @@ plot(hrData2019UTM[,1], add = TRUE)
 #writePolyShape(mcpHR2018, "mcpHR2018")
 
 #Base Map
-baseMap	<- openmap(c(-20.788, 44.1691), c(-20.7787, 44.18), type = 'bing')
+baseMap	<- openmap(c(-20.78680, 44.16914), c(-20.77868, 44.1768), type = 'bing')
 baseMapUTM	<- openproj(baseMap, projection = CRS("+proj=utm +zone=38 +south +datum=WGS84"))
 baseMapUTMRaster	<- raster(baseMapUTM)
 baseMapExtent	<- extent(baseMapUTMRaster)
 
-x <- seq(413511,414662,by=1) # where resolution is the pixel size you desire 
-y <- seq(7701087,7702133,by=1)
+x <- seq(413511,414662,by=.576) # where resolution is the pixel size you desire 
+y <- seq(7701087,7702133,by=.576)
 xy <- expand.grid(x=x,y=y)
 coordinates(xy) <- ~x+y
 gridded(xy) <- TRUE
