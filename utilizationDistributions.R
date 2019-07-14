@@ -130,14 +130,18 @@ baseMapUTMRaster6	<- raster(baseMapUTM6)
 baseMapExtent6	<- extent(baseMapUTMRaster6)
 
 #All
-baseMap	<- openmap(c(-20.78680, 44.16914), c(-20.77868, 44.1768), type = 'bing')
+baseMap	<- openmap(c(-20.7880, 44.16914), c(-20.77868, 44.1768), type = 'bing')
 baseMapUTM	<- openproj(baseMap, projection = CRS("+proj=utm +zone=38 +south +datum=WGS84"))
 baseMapUTMRaster	<- raster(baseMapUTM)
 #Can downsample the raster - average over neighboring pixels
 baseMapExtent	<- extent(baseMapUTMRaster)
 
-x	<- seq(413518,414325.2,by=.576) # where resolution is the pixel size you desire 
-y	<- seq(7701222,7702131,by=.576)
+
+setwd('D:/Google Drive/Graduate School/Research/Projects/SpatialClustering/KMNP/SpatialClusteringKMNPPilot2019')
+grmSelectionGP2	<- raster('grmSelection2.tif')
+
+x	<- seq(413300,414400,by=.576) # where resolution is the pixel size you desire 
+y	<- seq(7701000,7702250,by=.576)
 xy	<- expand.grid(x=x,y=y)
 coordinates(xy) <- ~x+y
 gridded(xy) <- TRUE
@@ -168,11 +172,31 @@ udaffRaster2	<- raster(as(udaff2019$"2","SpatialPixelsDataFrame"))
 udaffRaster3	<- raster(as(udaff2019$"3","SpatialPixelsDataFrame"))
 udaffRaster6	<- raster(as(udaff2019$"6","SpatialPixelsDataFrame"))
 
-kernel95HR2019	<- getverticeshr(udHR2019, percent = 95)
+kernel95HR2019_2	<- getverticeshr(udHR2019, percent = 95, whi = "2")
+kernel95HR2019_3	<- getverticeshr(udHR2019, percent = 95, whi = "3")
+kernel95HR2019_6	<- getverticeshr(udHR2019, percent = 95, whi = "6")
+
 kernel95ply2019	<- getverticeshr(udply2019, percent = 95)
 kernel95grm2019	<- getverticeshr(udgrm2019, percent = 95)
-kernel95aff2019	<- getverticeshr(udaff2019, percent = 95)
+kernel95aff2019_2	<- getverticeshr(udaff2019, percent = 95, whi = "2")
+kernel95aff2019_3	<- getverticeshr(udaff2019, percent = 95, whi = "3")
+kernel95aff2019_6	<- getverticeshr(udaff2019, percent = 95, whi = "6")
 
+croppedHR2		<- crop(udHRRaster2, extent(kernel95HR2019_2))
+croppedHR3		<- crop(udHRRaster3, extent(kernel95HR2019_3))
+croppedHR6		<- crop(udHRRaster6, extent(kernel95HR2019_6))
+
+croppedaff2		<- crop(udaffRaster2, extent(kernel95HR2019_2))
+croppedaff3		<- crop(udaffRaster3, extent(kernel95HR2019_3))
+croppedaff6		<- crop(udaffRaster6, extent(kernel95HR2019_6))
+
+grmSelection_2	<- croppedaff2/croppedHR2
+grmSelection_3	<- croppedaff3/croppedHR3
+grmSelection_6	<- croppedaff6/croppedHR6
+
+grmSelection_2Try2	<- crop(grmSelection_2, extent(c(413521.5, 414197, 7701192, 7701663)))
+
+writeRaster(grmSelection_2Try2, filename = 'grmSelection2.tif', format = 'GTiff')
 vud <- getvolumeUD(udHR2019)
 vudff <- getvolumeUD(udff2018)
 vudgrm <- getvolumeUD(udgrm2018)
@@ -182,10 +206,14 @@ plot(hrData2018UTM[,1])
 plot(kernel95HR2018, add = TRUE)
 
 setwd('D:/Google Drive/Graduate School/Research/Projects/SpatialClustering/KMNP/SpatialClusteringKMNPPilot2019')
-jpeg("utilizationDistributions2019.jpg", width = 5, height = 10, units = 'in', res = 300)
-par(mfrow = c(3, 2))
+jpeg("grmSelection2.jpg", width = 5, height = 10, units = 'in', res = 300)
+par(mfrow = c(1, 1))
 plotRGB(raster(baseMapUTM))
-plot(udHRRaster6, add = TRUE, axes = FALSE, box = FALSE, legend = F, main = 'Utilization distribution', alpha = 0.3)
+#plot(udHRRaster6, add = TRUE, axes = FALSE, box = FALSE, legend = F, main = 'Utilization distribution', alpha = 0.3)
+plot(grmSelectionGP2, add = TRUE, axes = FALSE, box = FALSE, legend = F, main = 'Utilization distribution', alpha = 0.3)
+scalebar(200, xy = c(413806.5, 7701481), type = 'bar', divs = 2, below = 'meters', label = c(0, 100, 200))
+
+dev.off()
 
 plotRGB(raster(baseMapUTM))
 plot(udaffRaster6, add = TRUE, axes = FALSE, box = FALSE, legend = F, main = 'Utilization distribution', alpha = 0.3)
