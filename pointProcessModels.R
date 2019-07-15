@@ -10,6 +10,10 @@ library(raster)
 
 memory.limit(1e6)
 
+### Remaining fixes: MCP's as the bounding boxes
+### Covariates of food trees
+### Covariates of social trees
+
 #######################
 ##### Set up data #####
 #######################
@@ -92,5 +96,71 @@ plot(grmppp, add = TRUE, col = 'white', pch = 16)
 #####################
 #grm
 model1	<- ppm(grmppp, ~1) #Same story as HR
-model2	<- ppm(grmppp, ~ hr, covariates = list(hr = density(hrppp)
+model2	<- ppm(grmppp, ~ hr, covariates = list(hr = density(hrppp)))
 	#At pop level grm and hr look the same, but group 6 is drowning out everyone else, need to seperate into 3 groups
+
+###############################
+##### Split into 3 groups #####
+###############################
+hr2	<- hrDataUTM[hrDataUTM$group_id == 2,]
+hr3	<- hrDataUTM[hrDataUTM$group_id == 3,]
+hr6	<- hrDataUTM[hrDataUTM$group_id == 6,]
+grm2	<- grmDataUTM[grmDataUTM$group_id == 2,]
+grm3	<- grmDataUTM[grmDataUTM$group_id == 3,]
+grm6	<- grmDataUTM[grmDataUTM$group_id == 6,]
+
+minXs2	<- c(hr2@bbox[1], grm2@bbox[1])
+maxXs2	<- c(hr2@bbox[3], grm2@bbox[3])
+minYs2	<- c(hr2@bbox[2], grm2@bbox[2])
+maxYs2	<- c(hr2@bbox[4], grm2@bbox[4])
+maxWin2	<- as.owin(c(min(minXs2), max(maxXs2), min(minYs2), max(maxYs2)))
+
+minXs3	<- c(hr3@bbox[1], grm3@bbox[1])
+maxXs3	<- c(hr3@bbox[3], grm3@bbox[3]) ###Need to calculate mcp as the bounding boxes
+minYs3	<- c(hr3@bbox[2], grm3@bbox[2])
+maxYs3	<- c(hr3@bbox[4], grm3@bbox[4])
+maxWin3	<- as.owin(c(min(minXs3), max(maxXs3), min(minYs3), max(maxYs3)))
+
+minXs6	<- c(hr6@bbox[1], grm6@bbox[1])
+maxXs6	<- c(hr6@bbox[3], grm6@bbox[3])
+minYs6	<- c(hr6@bbox[2], grm6@bbox[2])
+maxYs6	<- c(hr6@bbox[4], grm6@bbox[4])
+maxWin6	<- as.owin(c(min(minXs6), max(maxXs6), min(minYs6), max(maxYs6)))
+
+hrppp2	<- ppp(hr2$longitude, hr2$latitude, window = maxWin2)
+grmppp2	<- ppp(grm2$longitude, grm2$latitude, window = maxWin2)
+
+hrppp3	<- ppp(hr3$longitude, hr3$latitude, window = maxWin3)
+grmppp3	<- ppp(grm3$longitude, grm3$latitude, window = maxWin3)
+
+hrppp6	<- ppp(hr6$longitude, hr6$latitude, window = maxWin6)
+grmppp6	<- ppp(grm6$longitude, grm6$latitude, window = maxWin6)
+
+##########################
+##### 3 groups plots #####
+##########################
+par(mfrow = c(1, 3))
+plot(density(hrppp2, 50))
+plot(grmppp2, add = TRUE, pch = 16, col = 'white')
+
+plot(density(hrppp3, 50))
+plot(grmppp3, add = TRUE, pch = 16, col = 'white')
+
+plot(density(hrppp6, 50))
+plot(grmppp6, add = TRUE, pch = 16, col = 'white')
+
+##########################
+##### 3 group models #####
+##########################
+model3	<- ppm(grmppp2, ~ hr, covariates = list(hr = density(hrppp2))) #group 2 is least heavily tied to hr, then group 3, group 6 is highly tied
+model4	<- ppm(grmppp3, ~ hr, covariates = list(hr = density(hrppp3)))
+model5	<- ppm(grmppp6, ~ hr, covariates = list(hr = density(hrppp6)))
+
+par(mfrow = c(1, 3))
+plot(predict(model3))
+plot(grmppp2, add = TRUE, pch = 16, col = 'white')
+plot(predict(model4))
+plot(grmppp3, add = TRUE, pch = 16, col = 'white')
+plot(predict(model5))
+plot(grmppp6, add = TRUE, pch = 16, col = 'white')
+
