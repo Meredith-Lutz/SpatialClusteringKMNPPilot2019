@@ -34,7 +34,7 @@ grmFull		<- dbGetQuery(con, "SELECT * FROM main_tables.list_behaviors
 					ON main_tables.list_behaviors.tree_number = main_tables.trees.tree_number
 				WHERE (behavior = 'Groom' or behavior = 'Mutual Groom') AND (start_stop = 'Start');")
 
-listScans		<- listScans[,c(1:7, 14, 19, 28)]
+listScans		<- listScansFull[,c(1:7, 14, 19, 28)]
 grm			<- grmFull[,c(1:5, 7, 12, 26, 28:30, 37, 44, 46, 60:64, 70, 73:75)]
 colnames(grm)[17]	<- 'tree_height'
 
@@ -107,34 +107,44 @@ hr3	<- hrDataUTM[hrDataUTM$group_id == 3,]
 hr6	<- hrDataUTM[hrDataUTM$group_id == 6,]
 grm2	<- grmDataUTM[grmDataUTM$group_id == 2,]
 grm3	<- grmDataUTM[grmDataUTM$group_id == 3,]
-grm6	<- grmDataUTM[grmDataUTM$group_id == 6,]
+grm6Big	<- grmDataUTM[grmDataUTM$group_id == 6,]
+grm6	<- grm6Big[grm6Big$latitude != min(grm6Big$latitude),]
+all2	<- rbind(hr2[, c('group_id', 'latitude', 'longitude')], grm2[, c('group_id', 'latitude', 'longitude')])
+all3	<- rbind(hr3[, c('group_id', 'latitude', 'longitude')], grm3[, c('group_id', 'latitude', 'longitude')])
+all6	<- rbind(hr6[, c('group_id', 'latitude', 'longitude')], grm6[, c('group_id', 'latitude', 'longitude')])
 
+mcpHR2	<- mcp(all2[,1], percent = 100)
 minXs2	<- c(hr2@bbox[1], grm2@bbox[1])
 maxXs2	<- c(hr2@bbox[3], grm2@bbox[3])
 minYs2	<- c(hr2@bbox[2], grm2@bbox[2])
 maxYs2	<- c(hr2@bbox[4], grm2@bbox[4])
 maxWin2	<- as.owin(c(min(minXs2), max(maxXs2), min(minYs2), max(maxYs2)))
+mcpWin2	<- as.owin(mcpHR2)
 
+mcpHR3	<- mcp(all3[,1], percent = 100)
 minXs3	<- c(hr3@bbox[1], grm3@bbox[1])
 maxXs3	<- c(hr3@bbox[3], grm3@bbox[3]) ###Need to calculate mcp as the bounding boxes
 minYs3	<- c(hr3@bbox[2], grm3@bbox[2])
 maxYs3	<- c(hr3@bbox[4], grm3@bbox[4])
 maxWin3	<- as.owin(c(min(minXs3), max(maxXs3), min(minYs3), max(maxYs3)))
+mcpWin3	<- as.owin(mcpHR3)
 
+mcpHR6	<- mcp(all6[,1], percent = 100)
 minXs6	<- c(hr6@bbox[1], grm6@bbox[1])
 maxXs6	<- c(hr6@bbox[3], grm6@bbox[3])
 minYs6	<- c(hr6@bbox[2], grm6@bbox[2])
 maxYs6	<- c(hr6@bbox[4], grm6@bbox[4])
 maxWin6	<- as.owin(c(min(minXs6), max(maxXs6), min(minYs6), max(maxYs6)))
+mcpWin6	<- as.owin(mcpHR6)
 
-hrppp2	<- ppp(hr2$longitude, hr2$latitude, window = maxWin2)
-grmppp2	<- ppp(grm2$longitude, grm2$latitude, window = maxWin2)
+hrppp2	<- ppp(hr2$longitude, hr2$latitude, window = mcpWin2)
+grmppp2	<- ppp(grm2$longitude, grm2$latitude, window = mcpWin2)
 
-hrppp3	<- ppp(hr3$longitude, hr3$latitude, window = maxWin3)
-grmppp3	<- ppp(grm3$longitude, grm3$latitude, window = maxWin3)
+hrppp3	<- ppp(hr3$longitude, hr3$latitude, window = mcpWin3)
+grmppp3	<- ppp(grm3$longitude, grm3$latitude, window = mcpWin3)
 
-hrppp6	<- ppp(hr6$longitude, hr6$latitude, window = maxWin6)
-grmppp6	<- ppp(grm6$longitude, grm6$latitude, window = maxWin6)
+hrppp6	<- ppp(hr6$longitude, hr6$latitude, window = mcpWin6)
+grmppp6	<- ppp(grm6$longitude, grm6$latitude, window = mcpWin6)
 
 ##########################
 ##### 3 groups plots #####
