@@ -10,8 +10,6 @@ library(raster)
 
 memory.limit(1e6)
 
-### Remaining fixes: MCP's as the bounding boxes
-### Covariates of food trees
 ### Covariates of social trees
 
 #######################
@@ -69,12 +67,19 @@ maxWin		<- as.owin(c(min(minXs), max(maxXs), min(minYs), max(maxYs)))
 #######################
 ##### Covariates ######
 #######################
-setwd('D:/Google Drive/Graduate School/Research/Projects/SpatialClustering/MF/Analysis/SpatialAnalysisClustering')
-slope		<- raster('slopeRaster.TIF')
-slopeClip		<- crop(slope, extent(hrData2018SP))
+setwd('G:/My Drive/Graduate School/Research/Projects/SpatialClustering/KMNP')
+treeNames	<- read.csv('tree_names.csv', stringsAsFactors = FALSE)
+treeNums	<- read.csv('tree_gps_points.csv')
+trees		<- merge(treeNames, treeNums, by.x = 'No', by.y = 'name', all.x = TRUE)
+treesNoNA	<- trees[!is.na(trees$lat),]
 
-projected_slope	<- projectRaster(slope, crs = "+proj=utm +zone=38 +south +datum=WGS84")
-slope_trans		<- shift(projected_slope, x = -864749, y = -7897710)
+treesSP	<- SpatialPointsDataFrame(treesNoNA[,c('lon', 'lat')], treesNoNA, proj4string=CRS("+proj=longlat +datum=WGS84"))
+treesUTM	<- spTransform(treesSP[,c('lon', 'lat', 'Arbre')], CRS("+proj=utm +zone=38 +south +datum=WGS84"))
+
+hazoboengaUTM	<- treesUTM[treesUTM$Arbre == 'Hazomboenga',]
+hazombyUTM		<- treesUTM[treesUTM$Arbre == 'Hazomby',]
+anakarakaUTM	<- treesUTM[treesUTM$Arbre == 'Anakaraky',]
+harofyUTM		<- treesUTM[treesUTM$Arbre == 'Arofy',]
 
 #####################################
 ##### Convert to spatial points #####
@@ -146,12 +151,31 @@ grmppp3	<- ppp(grm3$longitude, grm3$latitude, window = mcpWin3)
 hrppp6	<- ppp(hr6$longitude, hr6$latitude, window = mcpWin6)
 grmppp6	<- ppp(grm6$longitude, grm6$latitude, window = mcpWin6)
 
+trees2		<- ppp(treesUTM$lon, treesUTM$lat, window = mcpWin2)
+hazoboenga2		<- ppp(hazoboengaUTM$lon, hazoboengaUTM$lat, window = mcpWin2)
+hazomby2		<- ppp(hazombyUTM$lon, hazombyUTM$lat, window = mcpWin2)
+anakaraka2		<- ppp(anakarakaUTM$lon, anakarakaUTM$lat, window = mcpWin2)
+harofy2		<- ppp(harofyUTM$lon, harofyUTM$lat, window = mcpWin2)
+
+trees3		<- ppp(treesUTM$lon, treesUTM$lat, window = mcpWin3)
+hazoboenga3		<- ppp(hazoboengaUTM$lon, hazoboengaUTM$lat, window = mcpWin3)
+hazomby3		<- ppp(hazombyUTM$lon, hazombyUTM$lat, window = mcpWin3)
+anakaraka3		<- ppp(anakarakaUTM$lon, anakarakaUTM$lat, window = mcpWin3)
+harofy3		<- ppp(harofyUTM$lon, harofyUTM$lat, window = mcpWin3)
+
+trees6		<- ppp(treesUTM$lon, treesUTM$lat, window = mcpWin6)
+hazoboenga6		<- ppp(hazoboengaUTM$lon, hazoboengaUTM$lat, window = mcpWin6)
+hazomby6		<- ppp(hazombyUTM$lon, hazombyUTM$lat, window = mcpWin6)
+anakaraka6		<- ppp(anakarakaUTM$lon, anakarakaUTM$lat, window = mcpWin6)
+harofy6		<- ppp(harofyUTM$lon, harofyUTM$lat, window = mcpWin6)
+
 ##########################
 ##### 3 groups plots #####
 ##########################
 par(mfrow = c(1, 3))
 plot(density(hrppp2, 50))
 plot(grmppp2, add = TRUE, pch = 16, col = 'white')
+plot(trees2, add = TRUE, pch = 16, col = 'yellow')
 
 plot(density(hrppp3, 50))
 plot(grmppp3, add = TRUE, pch = 16, col = 'white')
@@ -162,9 +186,39 @@ plot(grmppp6, add = TRUE, pch = 16, col = 'white')
 ##########################
 ##### 3 group models #####
 ##########################
-model3	<- ppm(grmppp2, ~ hr, covariates = list(hr = density(hrppp2))) #group 2 is least heavily tied to hr, then group 3, group 6 is highly tied
-model4	<- ppm(grmppp3, ~ hr, covariates = list(hr = density(hrppp3)))
-model5	<- ppm(grmppp6, ~ hr, covariates = list(hr = density(hrppp6)))
+model3	<- ppm(grmppp2, ~ hr + trees + hazoboenga + hazomby + harofy + anakaraka, 
+	covariates = list(hr = density(hrppp2), trees = density(trees2), hazoboenga = density(hazoboenga2),
+	hazomby = density(hazomby2), harofy = density(harofy2), anakaraka = density(anakaraka2)))
+model4	<- ppm(grmppp2, ~ hr + trees + hazoboenga + hazomby + anakaraka, 
+	covariates = list(hr = density(hrppp2), trees = density(trees2), hazoboenga = density(hazoboenga2),
+	hazomby = density(hazomby2), anakaraka = density(anakaraka2))) 
+model5	<- ppm(grmppp2, ~ hr + hazoboenga + hazomby + anakaraka, 
+	covariates = list(hr = density(hrppp2), hazoboenga = density(hazoboenga2),
+	hazomby = density(hazomby2), anakaraka = density(anakaraka2))) 
+
+model6	<- ppm(grmppp3, ~ hr + trees + hazoboenga + hazomby + harofy + anakaraka, 
+	covariates = list(hr = density(hrppp3), trees = density(trees3), hazoboenga = density(hazoboenga3),
+	hazomby = density(hazomby3), harofy = density(harofy3), anakaraka = density(anakaraka3)))
+model7	<- ppm(grmppp3, ~ hr + hazoboenga + hazomby + harofy + anakaraka, 
+	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3),
+	hazomby = density(hazomby3), harofy = density(harofy3), anakaraka = density(anakaraka3)))
+model8	<- ppm(grmppp3, ~ hr + hazoboenga + hazomby + harofy, 
+	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3),
+	hazomby = density(hazomby3), harofy = density(harofy3)))
+model9	<- ppm(grmppp3, ~ hr + hazoboenga + harofy, 
+	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3),
+	harofy = density(harofy3)))
+model10	<- ppm(grmppp3, ~ hr + hazoboenga, 
+	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3)))
+
+model11 <- ppm(grmppp6, ~ hr + trees, 
+	covariates = list(hr = density(hrppp6), trees = density(trees6)))
+model12 <- ppm(grmppp6, ~ hr, 
+	covariates = list(hr = density(hrppp6)))
+
+
+
+#group 2 is least heavily tied to hr, then group 3, group 6 is highly tied
 
 par(mfrow = c(1, 3))
 plot(predict(model3))
