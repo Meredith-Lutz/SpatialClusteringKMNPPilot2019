@@ -16,7 +16,7 @@ memory.limit(1e6)
 ##### Set up data #####
 #######################
 drv	<- dbDriver('PostgreSQL') ##Be sure to use real database name
-con	<- dbConnect(drv, dbname = 'verreauxi_2019_all_data', host = 'localhost', port = 5432,
+con	<- dbConnect(drv, dbname = 'verreauxi_2019_all_data', host = 'localhost', port = 5433,
 								 user = 'postgres', password = 'Animalbehavior1#')
 listScansFull	<- dbGetQuery(con, 'select * from main_tables.list_scans
 					LEFT JOIN main_tables.list_focals
@@ -194,7 +194,7 @@ model4	<- ppm(grmppp2, ~ hr + trees + hazoboenga + hazomby + anakaraka,
 	hazomby = density(hazomby2), anakaraka = density(anakaraka2))) 
 model5	<- ppm(grmppp2, ~ hr + hazoboenga + hazomby + anakaraka, 
 	covariates = list(hr = density(hrppp2), hazoboenga = density(hazoboenga2),
-	hazomby = density(hazomby2), anakaraka = density(anakaraka2))) 
+	hazomby = density(hazomby2), anakaraka = density(anakaraka2))) #Affiliate near anakaraka and away from hazoboenga and hazomby
 
 model6	<- ppm(grmppp3, ~ hr + trees + hazoboenga + hazomby + harofy + anakaraka, 
 	covariates = list(hr = density(hrppp3), trees = density(trees3), hazoboenga = density(hazoboenga3),
@@ -209,22 +209,46 @@ model9	<- ppm(grmppp3, ~ hr + hazoboenga + harofy,
 	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3),
 	harofy = density(harofy3)))
 model10	<- ppm(grmppp3, ~ hr + hazoboenga, 
-	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3)))
+	covariates = list(hr = density(hrppp3), hazoboenga = density(hazoboenga3))) #Affiliate near hazoboegna trees
 
 model11 <- ppm(grmppp6, ~ hr + trees, 
 	covariates = list(hr = density(hrppp6), trees = density(trees6)))
 model12 <- ppm(grmppp6, ~ hr, 
-	covariates = list(hr = density(hrppp6)))
-
+	covariates = list(hr = density(hrppp6))) #Have no data on trees in group 6 HR?
 
 
 #group 2 is least heavily tied to hr, then group 3, group 6 is highly tied
 
 par(mfrow = c(1, 3))
-plot(predict(model3))
-plot(grmppp2, add = TRUE, pch = 16, col = 'white')
-plot(predict(model4))
-plot(grmppp3, add = TRUE, pch = 16, col = 'white')
 plot(predict(model5))
+plot(grmppp2, add = TRUE, pch = 16, col = 'white')
+plot(predict(model10))
+plot(grmppp3, add = TRUE, pch = 16, col = 'white')
+plot(predict(model12))
 plot(grmppp6, add = TRUE, pch = 16, col = 'white')
+
+setwd('G:/My Drive/Graduate School/Research/Abstracts_Papers/ATBC 2019')
+png('grmDistribution.png', height = 7, width = 4, units = 'in', res = 300)
+par(mfrow = c(3,1), mar = c(2, 0, 0, 0))
+plot(grmppp2, pch = 16, main = '')
+plot(grmppp3, pch = 16, main = '')
+plot(grmppp6, pch = 16, main = '')
+dev.off()
+
+
+cols	<- interp.colourmap(colourmap(c('lightblue', 'dodgerblue2', 'dodgerblue3', 'dodgerblue4', 'navy',
+	'midnightblue'), range = c(-0.0005, 0.005)))
+cols2	<- interp.colourmap(colourmap(c(rep('lightblue', 2), rep('mediumblue', 5), rep('dodgerblue2', 15), rep('dodgerblue3', 25), 'dodgerblue4', rep('navy', 10),
+	rep('midnightblue', 10)), range = c(0, 0.021)))
+
+png('modPreds.png', height = 7, width = 4, units = 'in', res = 300)
+par(mfrow = c(3,1), mar = c(2, 0, 0, 0))
+plot(predict(model5), col = cols, box = F, main = '', ribbon = F)
+plot(grmppp2, pch = 16, main = '', add = T)
+plot(predict(model10), col = cols, box = F, main = '', ribbon = F)
+plot(grmppp3, pch = 16, main = '', add = T)
+plot(predict(model12), col = cols2, box = F, main = '', ribbon = F)
+plot(grmppp6, pch = 16, main = '', add = T)
+dev.off()
+
 
